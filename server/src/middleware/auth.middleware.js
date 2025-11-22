@@ -1,3 +1,4 @@
+import { UserRole } from "../generated/prisma/index.js";
 import { db } from "../libs/db.js";
 import jwt from "jsonwebtoken";
 
@@ -42,6 +43,30 @@ export const authMiddleware = async (req, res, next) => {
 
     req.user = user;
     next();
+  } catch (error) {
+    console.error("Error in authenticating user", error);
+    res.status(500).json({ message: "Error in authenticating user" });
+  }
+};
+
+export const checkAdmin = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    const user = await db.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        role: true,
+      },
+    });
+
+    if (!user || user.role != UserRole.ADMIN) {
+      return res.status(403).json({
+        message: "Forbidden - Admin Only",
+      });
+    }
   } catch (error) {
     console.error("Error in authenticating user", error);
     res.status(500).json({ message: "Error in authenticating user" });
