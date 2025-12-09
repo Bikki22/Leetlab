@@ -4,10 +4,10 @@ import jwt from "jsonwebtoken";
 
 export const authMiddleware = async (req, res, next) => {
   try {
-    const token = req.cookies.jwt || req.Authorization.Headers;
+    const token = req.cookies?.jwt;
 
     if (!token) {
-      res.status(401).json({
+      return res.status(401).json({
         message: "Unauthorized - No token Provided",
       });
     }
@@ -15,13 +15,10 @@ export const authMiddleware = async (req, res, next) => {
     let decoded;
 
     try {
-      decoded = await jwt.verify(token, process.env.JWT_SECRET);
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch (error) {
-      return res.status(401).json({
-        message: "UnAuthorized ",
-      });
+      res.status(400).json({ error: "error in getting decoded code", error });
     }
-
     const user = await db.user.findUnique({
       where: {
         id: decoded.id,
